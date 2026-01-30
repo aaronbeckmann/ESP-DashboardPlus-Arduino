@@ -27,17 +27,21 @@ A real-time, on-device web dashboard library for ESP32 microcontrollers. Create 
 
 ### Manual Installation
 
-1. Download the latest release ZIP from [GitHub](https://github.com/aaronbeckmann/ESP-DashboardPlus/releases)
+1. Download the latest release ZIP from [GitHub](https://github.com/aaronbeckmann/ESP-DashboardPlus-Arduino/releases)
 2. Open Arduino IDE
 3. Go to **Sketch > Include Library > Add .ZIP Library...**
 4. Select the downloaded ZIP file
 
+For OTA: a compatible partition scheme must be chosen.
+
 ### Dependencies
 
 Install these libraries from the Library Manager:
-- **ArduinoJson** by Benoit Blanchon (v7.0.0+)
-- **ESPAsyncWebServer** by Me-No-Dev
-- **AsyncTCP** by Me-No-Dev (ESP32)
+- [**ArduinoJson**](https://docs.arduino.cc/libraries/arduinojson/) (by Benoit Blanchon)
+- [**ESPAsyncWebServer**](https://docs.arduino.cc/libraries/esp-async-webserver/) (by ESP32Async)
+- [**AsyncTCP**](https://docs.arduino.cc/libraries/esp-async-tcp/) (by ESP32Async)
+
+If any JSON related errors pop up: Click **Sketch > Include Library > ArduinoJSON**
 
 ## 🚀 Quick Start
 
@@ -116,8 +120,3 @@ Full documentation: **[https://aaronbeckmann.github.io/ESP-DashboardPlus](https:
 ## 📄 License
 
 MIT License - see [LICENSE](LICENSE) file.
-
-## 🙏 Credits
-
-- [ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer)
-- [ArduinoJson](https://arduinojson.org/)
