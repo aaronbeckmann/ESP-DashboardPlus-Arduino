@@ -1,0 +1,3148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ESP-DashboardPlus</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    /* Theme variables - Default is dark, switched via JS */
+    :root {
+      --bg: #0f1419;
+      --bg-secondary: #151b23;
+      --bg-card: #1a2332;
+      --bg-card-hover: #1f2937;
+      --text: #e8ebf0;
+      --text-muted: #6b7888;
+      --primary: #00d4aa;
+      --primary-glow: rgba(0, 212, 170, 0.25);
+      --primary-dark: #00a88a;
+      --success: #22c55e;
+      --success-glow: rgba(34, 197, 94, 0.25);
+      --warning: #f59e0b;
+      --warning-glow: rgba(245, 158, 11, 0.25);
+      --danger: #ef4444;
+      --danger-glow: rgba(239, 68, 68, 0.25);
+      --info: #3b82f6;
+      --info-glow: rgba(59, 130, 246, 0.25);
+      --border: #2d3a4d;
+      --radius: 12px;
+      --shadow: 0 8px 32px -8px rgba(0,0,0,0.6);
+      --gradient-primary: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      --gradient-glow: radial-gradient(ellipse at center, var(--primary-glow), transparent 70%);
+    }
+    
+    /* Light theme */
+    [data-theme="light"] {
+      --bg: #f5f7fa;
+      --bg-secondary: #ffffff;
+      --bg-card: #ffffff;
+      --bg-card-hover: #f8f9fa;
+      --text: #1a1f2e;
+      --text-muted: #6b7280;
+      --primary: #00b894;
+      --primary-glow: rgba(0, 184, 148, 0.15);
+      --primary-dark: #00a88a;
+      --success: #22c55e;
+      --success-glow: rgba(34, 197, 94, 0.15);
+      --warning: #f59e0b;
+      --warning-glow: rgba(245, 158, 11, 0.15);
+      --danger: #ef4444;
+      --danger-glow: rgba(239, 68, 68, 0.15);
+      --info: #3b82f6;
+      --info-glow: rgba(59, 130, 246, 0.15);
+      --border: #e5e7eb;
+      --shadow: 0 8px 32px -8px rgba(0,0,0,0.1);
+    }
+    
+    [data-theme="light"] body {
+      background-image: 
+        radial-gradient(ellipse at top, rgba(0, 184, 148, 0.05), transparent 50%),
+        linear-gradient(rgba(0, 184, 148, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 184, 148, 0.02) 1px, transparent 1px);
+    }
+    
+    [data-theme="light"] .date-input::-webkit-calendar-picker-indicator {
+      filter: none;
+    }
+    
+    
+    body {
+      display: flex;
+      flex-direction: column;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 100vh;
+      background-image: 
+        radial-gradient(ellipse at top, rgba(0, 212, 170, 0.03), transparent 50%),
+        linear-gradient(rgba(0, 212, 170, 0.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 212, 170, 0.015) 1px, transparent 1px);
+      background-size: 100% 100%, 50px 50px, 50px 50px;
+    }
+    
+    .container {margin: 0; padding: 0 20px;}
+
+    main.container { margin-top: 32px; }
+    
+    /* Header */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--bg-secondary);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 0;
+    }
+    
+    .header-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    
+    .logo { display: flex; align-items: center; gap: 14px; }
+    
+    .logo-icon {
+      width: 44px;
+      height: 44px;
+      background: var(--gradient-primary);
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 24px var(--primary-glow);
+    }
+    
+    .logo h1 { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.02em; }
+    .logo p { font-size: 0.65rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; letter-spacing: 0.12em; text-transform: uppercase; }
+    
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.25);
+      border-radius: 10px;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+    
+    .status.disconnected { background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.25); }
+    
+    .pulse-dot {
+      width: 10px;
+      height: 10px;
+      background: var(--success);
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+      box-shadow: 0 0 12px var(--success-glow);
+    }
+    
+    .disconnected .pulse-dot { background: var(--danger); animation: none; box-shadow: 0 0 12px var(--danger-glow); }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(0.9); }
+    }
+    
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes glow {
+      0%, 100% { box-shadow: 0 0 20px var(--primary-glow); }
+      50% { box-shadow: 0 0 40px var(--primary-glow), 0 0 60px var(--primary-glow); }
+    }
+    
+    /* Main */
+    main { padding: 32px 0; flex: 1 0 auto; flex-direction: row;}
+    
+    .section-title {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, var(--border), transparent);
+    }
+    
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+    
+    /* Cards */
+    .card {
+      min-width: 0;
+      position: relative;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+      overflow: hidden;
+    }
+
+    /* Allow dropdown menus to overflow above neighboring cards */
+    .card.dropdown-open {
+      overflow: visible;
+      z-index: 2000;
+    }
+
+    /* Small update indicator (does not affect layout) */
+    .update-indicator {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--primary);
+      box-shadow: 0 0 8px var(--primary-glow);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .update-indicator.flash {
+      animation: updateFlash 0.7s ease-out forwards;
+    }
+
+    @keyframes updateFlash {
+      0% { opacity: 1; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.4); }
+      100% { opacity: 0; transform: scale(0.9); }
+    }
+    
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--primary-glow), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .card-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 12px;
+    }
+    
+    /* Stat Card */
+    .stat-value {
+      font-size: 2.25rem;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      background: var(--gradient-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.1;
+    }
+    
+    .stat-unit { font-size: 0.9rem; color: var(--text-muted); margin-left: 6px; font-weight: 500; }
+    
+    .stat-trend {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 10px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    
+    .stat-trend.up { color: var(--success); background: rgba(34, 197, 94, 0.1); }
+    .stat-trend.down { color: var(--danger); background: rgba(239, 68, 68, 0.1); }
+    
+    /* Status/Feedback Card */
+    .status-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    
+    /* Console Log Card */
+    .console-container {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    
+    .console-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .console-header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    
+    .console-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--success);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--success-glow);
+    }
+    
+    .console-clear-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-muted);
+      padding: 4px 10px;
+      font-size: 0.7rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .console-clear-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+    
+    .console-logs {
+      max-height: 240px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+    
+    .console-logs::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    .console-logs::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 3px;
+    }
+    
+    .console-log-entry {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 14px;
+      border-bottom: 1px solid rgba(45, 58, 77, 0.5);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      animation: slideUp 0.2s ease-out;
+    }
+    
+    .console-log-entry:hover {
+      background: rgba(0, 212, 170, 0.03);
+    }
+    
+    .console-log-entry:last-child {
+      border-bottom: none;
+    }
+    
+    .console-timestamp {
+      color: var(--text-muted);
+      flex-shrink: 0;
+      font-size: 0.7rem;
+    }
+    
+    .console-level {
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+    
+    .console-level.debug {
+      background: rgba(107, 120, 136, 0.2);
+      color: var(--text-muted);
+    }
+    
+    .console-level.info {
+      background: rgba(59, 130, 246, 0.15);
+      color: var(--info);
+    }
+    
+    .console-level.warning {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--warning);
+    }
+    
+    .console-level.error {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--danger);
+    }
+    
+    .console-message {
+      color: var(--text);
+      word-break: break-word;
+      flex: 1;
+    }
+    
+    .console-message.debug { color: var(--text-muted); }
+    .console-message.info { color: var(--text); }
+    .console-message.warning { color: var(--warning); }
+    .console-message.error { color: var(--danger); }
+    
+    .console-empty {
+      padding: 32px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+    
+    .console-input-container {
+      display: flex;
+      gap: 8px;
+      padding: 12px 14px;
+      border-top: 1px solid var(--border);
+      background: var(--bg-secondary);
+    }
+    
+    .console-input {
+      flex: 1;
+      padding: 10px 14px;
+      padding-left: 28px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      width: 100%;
+    }
+    
+    .console-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-glow);
+    }
+    
+    .console-input-prefix {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--primary);
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+    }
+    
+    .console-send-btn {
+      padding: 10px 16px;
+      background: var(--gradient-primary);
+      border: none;
+      border-radius: 8px;
+      color: var(--bg);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    
+    .console-send-btn:hover {
+      box-shadow: 0 4px 12px var(--primary-glow);
+    }
+    
+    .console-send-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .status-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      flex-shrink: 0;
+    }
+    
+    .status-icon.success { background: rgba(34, 197, 94, 0.15); color: var(--success); box-shadow: 0 0 20px var(--success-glow); }
+    .status-icon.warning { background: rgba(245, 158, 11, 0.15); color: var(--warning); box-shadow: 0 0 20px var(--warning-glow); }
+    .status-icon.danger { background: rgba(239, 68, 68, 0.15); color: var(--danger); box-shadow: 0 0 20px var(--danger-glow); }
+    .status-icon.info { background: rgba(59, 130, 246, 0.15); color: var(--info); box-shadow: 0 0 20px var(--info-glow); }
+    .status-icon.primary { background: rgba(0, 212, 170, 0.15); color: var(--primary); box-shadow: 0 0 20px var(--primary-glow); }
+    
+    .status-content { flex: 1; min-width: 0; }
+    .status-label { font-size: 0.875rem; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+    .status-message { font-size: 0.8rem; color: var(--text-muted); }
+    
+    /* Chart Card */
+    .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .chart-wrapper { position: relative; }
+    .chart-container { height: 120px; position: relative; margin-left: 36px; margin-bottom: 20px; }
+    .chart-svg { width: 100%; height: 100%; }
+    
+    .chart-y-axis {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 20px;
+      width: 32px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      font-size: 0.6rem;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-muted);
+      text-align: right;
+      padding-right: 4px;
+    }
+    
+    .chart-x-axis {
+      position: absolute;
+      left: 36px;
+      right: 0;
+      bottom: 0;
+      height: 16px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.6rem;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-muted);
+    }
+    
+    .chart-path {
+      fill: none;
+      stroke: var(--primary);
+      stroke-width: 1;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      filter: drop-shadow(0 0 8px var(--primary-glow));
+    }
+    
+    .chart-area { fill: url(#chartGradient); }
+    
+    .chart-point {
+      fill: var(--primary);
+      filter: drop-shadow(0 0 6px var(--primary-glow));
+    }
+    
+    .chart-bar {
+      fill: var(--primary);
+      filter: drop-shadow(0 0 6px var(--primary-glow));
+      rx: 3;
+    }
+    
+    .chart-grid { stroke: var(--border); stroke-width: 0.5; stroke-dasharray: 4 4; }
+    
+    .chart-live {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    
+    .chart-type-badge {
+      padding: 3px 8px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+    
+    .chart-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 8px;
+      font-size: 0.7rem;
+    }
+    
+    .chart-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-muted);
+    }
+    
+    .chart-legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 14px 20px;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.2s, filter 0.2s;
+      text-decoration: none;
+    }
+    
+    .btn:active { transform: scale(0.97); }
+    
+    .btn-primary {
+      background: var(--gradient-primary);
+      color: var(--bg);
+      box-shadow: 0 4px 16px -4px var(--primary-glow);
+    }
+    
+    .btn-primary:hover { box-shadow: 0 8px 24px -4px var(--primary-glow); filter: brightness(1.1); }
+    
+    .btn-success { background: var(--success); color: var(--bg); box-shadow: 0 4px 16px -4px var(--success-glow); }
+    .btn-success:hover { box-shadow: 0 8px 24px -4px var(--success-glow); filter: brightness(1.1); }
+    
+    .btn-warning { background: var(--warning); color: var(--bg); box-shadow: 0 4px 16px -4px var(--warning-glow); }
+    .btn-warning:hover { box-shadow: 0 8px 24px -4px var(--warning-glow); filter: brightness(1.1); }
+    
+    .btn-danger { background: var(--danger); color: white; box-shadow: 0 4px 16px -4px var(--danger-glow); }
+    .btn-danger:hover { box-shadow: 0 8px 24px -4px var(--danger-glow); filter: brightness(1.1); }
+    
+    .btn-info { background: var(--info); color: white; box-shadow: 0 4px 16px -4px var(--info-glow); }
+    .btn-info:hover { box-shadow: 0 8px 24px -4px var(--info-glow); filter: brightness(1.1); }
+    
+    .btn-secondary {
+      background: var(--bg-secondary);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { background: var(--border); }
+    
+    .btn-outline {
+      background: transparent;
+      color: var(--primary);
+      border: 1px solid var(--primary);
+    }
+    .btn-outline:hover { background: rgba(0, 212, 170, 0.1); }
+    
+    /* Input */
+    .input-group { position: relative; display: flex; gap: 8px; }
+    
+    .input {
+      flex: 1;
+      padding: 14px 16px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.875rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    
+    .input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px var(--primary-glow);
+    }
+    
+    .input-btn {
+      padding: 14px 16px;
+      background: var(--gradient-primary);
+      color: var(--bg);
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.2s;
+    }
+    
+    .input-btn:hover { box-shadow: 0 4px 16px -4px var(--primary-glow); }
+    .input-btn:active { transform: scale(0.95); }
+    
+    /* Date Picker */
+    .date-input {
+      width: 100%;
+      padding: 14px 16px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    
+    .date-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px var(--primary-glow);
+    }
+    
+    .date-input::-webkit-calendar-picker-indicator {
+      filter: invert(1);
+      cursor: pointer;
+    }
+    
+    /* Toggle */
+    .toggle-container { display: flex; align-items: center; justify-content: space-between; }
+    
+    .toggle {
+      position: relative;
+      width: 60px;
+      height: 34px;
+      background: var(--border);
+      border-radius: 17px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    
+    .toggle.on {
+      background: var(--primary);
+      box-shadow: 0 0 24px var(--primary-glow);
+    }
+    
+    .toggle-knob {
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      width: 26px;
+      height: 26px;
+      background: white;
+      border-radius: 50%;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .toggle.on .toggle-knob { left: 30px; }
+    
+    /* Slider */
+    .slider-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    
+    .slider-value {
+      font-size: 1.75rem;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--primary);
+    }
+    
+    .slider-track {
+      position: relative;
+      height: 14px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      cursor: pointer;
+      overflow: hidden;
+    }
+    
+    .slider-fill {
+      height: 100%;
+      background: var(--gradient-primary);
+      border-radius: 7px;
+      box-shadow: 0 0 12px var(--primary-glow);
+      transition: width 0.1s;
+    }
+    
+    .slider-thumb {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 24px;
+      height: 24px;
+      background: white;
+      border: 3px solid var(--primary);
+      border-radius: 50%;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3), 0 0 0 4px var(--primary-glow);
+      transition: left 0.1s;
+    }
+    
+    .slider-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    
+    /* Gauge */
+    .gauge-container { text-align: center; padding: 12px 0; }
+    .gauge-svg { max-width: 200px; margin: 0 auto; }
+    
+    .gauge-bg { fill: none; stroke: var(--bg); stroke-width: 14; stroke-linecap: round; }
+    .gauge-track { fill: none; stroke: var(--border); stroke-width: 14; stroke-linecap: round; }
+    .gauge-fill { fill: none; stroke-width: 14; stroke-linecap: round; transition: stroke-dashoffset 0.5s ease-out, stroke 0.3s; }
+    
+    .gauge-value-container { margin-top: -24px; }
+    .gauge-value { font-size: 1.75rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+    
+    /* Color Picker */
+    .color-row { display: flex; align-items: center; gap: 16px; }
+    
+    .color-preview {
+      width: 60px;
+      height: 60px;
+      border-radius: var(--radius);
+      border: 2px solid var(--border);
+      transition: box-shadow 0.3s;
+    }
+    
+    .color-picker-input {
+      width: 50px;
+      height: 50px;
+      border: none;
+      cursor: pointer;
+      border-radius: 10px;
+      background: transparent;
+    }
+    
+    .color-presets { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+    
+    .color-preset {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+    }
+    
+    .color-preset:hover { transform: scale(1.15); }
+    .color-preset.active { border-color: white; box-shadow: 0 0 12px currentColor; }
+    
+    /* Dropdown */
+    .dropdown { position: relative; }
+    
+    .dropdown-trigger {
+      width: 100%;
+      padding: 14px 16px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 0.875rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    
+    .dropdown-trigger:hover { border-color: var(--primary); }
+    .dropdown.open .dropdown-trigger { border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-glow); }
+    
+    .dropdown-menu {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      right: 0;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: var(--shadow);
+      z-index: 5000;
+      display: none;
+    }
+    
+    .dropdown.open .dropdown-menu { display: block; animation: slideUp 0.2s ease-out; }
+    
+    .dropdown-item {
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: background 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .dropdown-item:hover { background: var(--bg-card-hover); }
+    .dropdown-item.active { color: var(--primary); background: rgba(0, 212, 170, 0.05); }
+    
+    /* OTA Upload */
+    .upload-zone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 40px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    
+    .upload-zone:hover, .upload-zone.dragover {
+      border-color: var(--primary);
+      background: rgba(0, 212, 170, 0.05);
+    }
+    
+    .upload-icon { font-size: 3rem; margin-bottom: 12px; }
+    .upload-text { font-size: 0.9rem; color: var(--text); font-weight: 500; margin-bottom: 6px; }
+    .upload-hint { font-size: 0.75rem; color: var(--text-muted); }
+    
+    .upload-progress { margin-top: 20px; }
+    
+    .progress-bar {
+      height: 10px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: var(--gradient-primary);
+      border-radius: 5px;
+      transition: width 0.3s;
+      box-shadow: 0 0 12px var(--primary-glow);
+    }
+    
+    .progress-text {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    
+    .progress-text span:last-child { color: var(--primary); font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+    
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.25s, visibility 0.25s;
+    }
+    
+    .modal-overlay.open { opacity: 1; visibility: visible; }
+    
+    .modal {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      max-width: 420px;
+      width: 100%;
+      box-shadow: var(--shadow);
+      transform: translateY(20px) scale(0.95);
+      transition: transform 0.25s;
+    }
+    
+    .modal-overlay.open .modal { transform: translateY(0) scale(1); }
+    
+    .modal-header { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+    
+    .modal-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .modal-icon.warning { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
+    .modal-icon.danger { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+    
+    .modal-title { font-size: 1.2rem; font-weight: 700; }
+    .modal-body { color: var(--text-muted); margin-bottom: 24px; line-height: 1.6; }
+    .modal-actions { display: flex; gap: 12px; }
+    .modal-actions .btn { flex: 1; }
+    
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 10px 0;
+      text-align: center;
+    }
+    
+    footer p { font-size: 0.875rem; color: var(--text-muted); }
+    footer strong { color: var(--primary); font-weight: 600; }
+    
+    /* Icons */
+    .icon { width: 20px; height: 20px; }
+    .icon-sm { width: 16px; height: 16px; }
+    .icon-lg { width: 24px; height: 24px; }
+    
+    /* Theme Dropdown */
+    .theme-dropdown {
+      position: relative;
+      z-index: 200;
+    }
+    
+    .theme-trigger {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .theme-trigger:hover {
+      border-color: var(--primary);
+    }
+    
+    .theme-dropdown.open .theme-trigger {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-glow);
+    }
+    
+    .theme-menu {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      min-width: 160px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: var(--shadow);
+      z-index: 300;
+      display: none;
+    }
+    
+    .theme-dropdown.open .theme-menu {
+      display: block;
+      animation: slideUp 0.2s ease-out;
+    }
+    
+    .theme-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      cursor: pointer;
+      transition: background 0.15s;
+      color: var(--text);
+      font-size: 0.85rem;
+    }
+
+    .theme-option[data-theme="light"]:not(.active) {
+      color: var(--bg)
+    }
+    
+    .theme-option[data-theme="light"]:not(.active):hover {
+      background: var(--text)
+    }
+
+    .theme-option:hover {
+      background: var(--bg-card-hover);
+    }
+    
+    .theme-option.active {
+      color: var(--primary);
+      background: rgba(0, 212, 170, 0.05);
+    }
+    
+    .theme-option svg {
+      width: 18px;
+      height: 18px;
+      opacity: 0.7;
+    }
+    
+    .theme-option.active svg {
+      opacity: 1;
+    }
+    
+    .theme-check {
+      margin-left: auto;
+      color: var(--primary);
+    }
+    
+    /* Tabs Navigation */
+    .app-layout {
+      display: flex;
+      min-height: calc(100vh - 140px);
+      gap: 0;
+    }
+    
+    .sidebar {
+      width: 240px;
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border);
+      padding: 20px 12px;
+      flex-shrink: 0;
+    }
+    
+    .sidebar-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      background: transparent;
+      text-align: left;
+      width: 100%;
+    }
+    
+    .nav-item:hover {
+      background: var(--bg-card);
+      color: var(--text);
+    }
+    
+    .nav-item.active {
+      background: rgba(0, 212, 170, 0.1);
+      color: var(--primary);
+      border: 1px solid rgba(0, 212, 170, 0.2);
+    }
+    
+    .nav-item svg {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+    
+    .main-content {
+      flex: 1;
+      padding: 32px;
+      overflow-y: auto;
+    }
+    
+    .tab-panel {
+      display: none;
+    }
+    
+    .tab-panel.active {
+      display: block;
+      animation: slideUp 0.3s ease-out;
+    }
+    
+    /* Console Page Styles */
+    .console-page {
+      max-width: 100%;
+    }
+    
+    .console-page .console-container {
+      height: calc(100vh - 280px);
+      min-height: 400px;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .console-page .console-logs {
+      flex: 1;
+      max-height: none;
+    }
+    
+    .console-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      gap: 12px;
+    }
+    
+    .console-toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .console-filter {
+      display: flex;
+      gap: 6px;
+    }
+    
+    .filter-btn {
+      padding: 6px 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .filter-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+    
+    .filter-btn.active {
+      background: rgba(0, 212, 170, 0.1);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+    
+    /* OTA Page Styles */
+    .ota-page {
+      max-width: 600px;
+    }
+    
+    .ota-info {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    
+    .ota-info-item {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+    }
+    
+    .ota-info-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+    
+    .ota-info-value {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    
+    .page-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    
+    .page-description {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 24px;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar {
+        display: none;
+      }
+      
+      .mobile-nav {
+        display: flex;
+        gap: 4px;
+        padding: 12px 16px;
+        background: var(--bg-secondary);
+        border-bottom: 1px solid var(--border);
+        overflow-x: auto;
+      }
+      
+      .mobile-nav .nav-item {
+        padding: 8px 16px;
+        white-space: nowrap;
+      }
+      
+      .main-content {
+        padding: 16px;
+      }
+      
+      .ota-info {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    @media (min-width: 769px) {
+      .mobile-nav {
+        display: none;
+      }
+    }
+    
+    @media (max-width: 640px) {
+      .grid { 
+        grid-template-columns: 1fr; 
+        gap: 16px;
+      }
+      .grid .card[style*="grid-column: span"] {
+        grid-column: span 1 !important;
+      }
+      .grid .card[style*="grid-row: span"] {
+        grid-row: span 1 !important;
+      }
+      .header-content { flex-direction: column; gap: 16px; align-items: stretch; }
+      .status { justify-content: center; }
+      .console-filter {
+        flex-wrap: wrap;
+      }
+      .console-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .console-toolbar-left {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <div class="header-content">
+        <div class="logo">
+          <div class="logo-icon">
+            <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="var(--bg)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="4" y="4" width="16" height="16" rx="2"></rect>
+              <rect x="9" y="9" width="6" height="6"></rect>
+              <path d="M9 1v3"></path><path d="M15 1v3"></path>
+              <path d="M9 20v3"></path><path d="M15 20v3"></path>
+              <path d="M20 9h3"></path><path d="M20 14h3"></path>
+              <path d="M1 9h3"></path><path d="M1 14h3"></path>
+            </svg>
+          </div>
+          <div>
+            <h1>ESP32 Dashboard</h1>
+            <p>Real-time Device Monitor</p>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="theme-dropdown" id="themeDropdown">
+            <button class="theme-trigger" onclick="toggleThemeDropdown()">
+              <svg id="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px">
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+              </svg>
+              <svg id="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;display:none">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+              </svg>
+              <span id="theme-label">Light</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;opacity:0.5">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </button>
+            <div class="theme-menu">
+              <div class="theme-option" data-theme="light" onclick="setTheme('light')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="5"></circle>
+                  <line x1="12" y1="1" x2="12" y2="3"></line>
+                  <line x1="12" y1="21" x2="12" y2="23"></line>
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                  <line x1="1" y1="12" x2="3" y2="12"></line>
+                  <line x1="21" y1="12" x2="23" y2="12"></line>
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+                Light
+                <svg class="theme-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="width:16px;height:16px;display:none">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </div>
+              <div class="theme-option" data-theme="dark" onclick="setTheme('dark')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+                Dark
+                <svg class="theme-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="width:16px;height:16px;display:none">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </div>
+            </div>
+          </div>
+          <div class="status" id="connectionStatus">
+            <div class="pulse-dot"></div>
+            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--success)">
+              <path d="M5 12.55a11 11 0 0 1 14.08 0"></path>
+              <path d="M1.42 9a16 16 0 0 1 21.16 0"></path>
+              <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+              <circle cx="12" cy="20" r="1"></circle>
+            </svg>
+            <span>Connected</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile Navigation -->
+  <nav class="mobile-nav" id="mobile-nav">
+    <button class="nav-item active" data-tab="dashboard" onclick="switchTab('dashboard')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+      Dashboard
+    </button>
+    <button class="nav-item" data-tab="console" id="mobile-nav-console" onclick="switchTab('console')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+      Console
+    </button>
+    <button class="nav-item" data-tab="ota" id="mobile-nav-ota" onclick="switchTab('ota')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+      OTA Update
+    </button>
+  </nav>
+
+  <div class="app-layout">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-tab="dashboard" onclick="switchTab('dashboard')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+          Dashboard
+        </button>
+        <button class="nav-item" data-tab="console" id="sidebar-nav-console" onclick="switchTab('console')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+          Console
+        </button>
+        <button class="nav-item" data-tab="ota" id="sidebar-nav-ota" onclick="switchTab('ota')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+          OTA Update
+        </button>
+      </nav>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Dashboard Tab -->
+      <div id="tab-dashboard" class="tab-panel active">
+        <div id="dashboard"></div>
+      </div>
+
+      <!-- Console Tab -->
+      <div id="tab-console" class="tab-panel">
+        <div class="console-page">
+          <h1 class="page-title">Console</h1>
+          <p class="page-description">View real-time logs and send commands to your ESP32 device.</p>
+          
+          <div class="console-toolbar">
+            <div class="console-toolbar-left">
+              <div class="console-filter">
+                <button class="filter-btn active" data-level="all" onclick="filterLogs('all')">All</button>
+                <button class="filter-btn" data-level="debug" onclick="filterLogs('debug')">Debug</button>
+                <button class="filter-btn" data-level="info" onclick="filterLogs('info')">Info</button>
+                <button class="filter-btn" data-level="warning" onclick="filterLogs('warning')">Warning</button>
+                <button class="filter-btn" data-level="error" onclick="filterLogs('error')">Error</button>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="console-clear-btn" onclick="exportLogs()">
+                <svg class="icon-sm" style="width:14px;height:14px;margin-right:4px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                Export
+              </button>
+              <button class="console-clear-btn" onclick="clearPageConsole()">Clear</button>
+            </div>
+          </div>
+          
+          <div class="console-container">
+            <div class="console-header">
+              <div class="console-header-left">
+                <div class="console-dot" id="console-status-dot"></div>
+                <span id="console-count">0 entries</span>
+              </div>
+              <span style="font-size:0.7rem;color:var(--text-muted)" id="console-timestamp">--:--:--</span>
+            </div>
+            <div class="console-logs" id="page-console-logs">
+              <div class="console-empty">No log entries yet. Logs from your ESP32 will appear here.</div>
+            </div>
+            <div class="console-input-container">
+              <div style="position:relative;flex:1">
+                <span class="console-input-prefix">$</span>
+                <input type="text" class="console-input" id="page-console-input" placeholder="Enter command..." onkeydown="if(event.key==='Enter')sendPageCommand()">
+              </div>
+              <button class="console-send-btn" onclick="sendPageCommand()">
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                Send
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- OTA Tab -->
+      <div id="tab-ota" class="tab-panel">
+        <div class="ota-page">
+          <h1 class="page-title">Firmware Update</h1>
+          <p class="page-description">Upload new firmware to your ESP32 device over-the-air.</p>
+          
+          <div class="ota-info">
+            <div class="ota-info-item">
+              <div class="ota-info-label">Current Version</div>
+              <div class="ota-info-value" id="ota-version">--</div>
+            </div>
+            <div class="ota-info-item">
+              <div class="ota-info-label">Last Updated</div>
+              <div class="ota-info-value" id="ota-last-update">--</div>
+            </div>
+          </div>
+          
+          <div class="card">
+            <div class="card-title">Upload Firmware</div>
+            <div class="upload-zone" id="page-upload-zone" onclick="document.getElementById('page-ota-file').click()" ondrop="handlePageOtaDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+              <input type="file" id="page-ota-file" accept=".bin,.ota" style="display:none" onchange="handlePageOtaSelect(event)">
+              <div class="upload-icon">📦</div>
+              <div class="upload-text">Drop firmware file or click to browse</div>
+              <div class="upload-hint">.bin, .ota files up to 4MB</div>
+            </div>
+            <div class="upload-progress" id="page-ota-progress" style="display:none">
+              <div class="progress-bar"><div class="progress-fill" id="page-progress-fill" style="width:0%"></div></div>
+              <div class="progress-text">
+                <span id="page-progress-status">Uploading...</span>
+                <span id="page-progress-pct">0%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <footer>
+    <div class="container">
+      <p>Made with <strong><a href="https://github.com/aaronbeckmann/ESP-DashboardPlus" style="color: var(--primary); text-decoration: none;" target="_blank">ESP32-DashboardPlus</a></strong></p>
+    </div>
+  </footer>
+
+  <!-- Modal Template -->
+  <div class="modal-overlay" id="confirmModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-icon warning">
+          <svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <circle cx="12" cy="17" r="1"></circle>
+          </svg>
+        </div>
+        <h3 class="modal-title" id="modalTitle">Confirm Action</h3>
+      </div>
+      <p class="modal-body" id="modalBody">Are you sure you want to proceed?</p>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-warning" id="modalConfirm">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // WebSocket Connection
+    let ws = null;
+    let cards = {};
+    let groups = [];
+    let reconnectTimeout = null;
+    let lastMessageTime = null;
+    let messageTimeoutCheck = null;
+    
+    // Tab configuration (set by server)
+    let enableOTA = true;
+    let enableConsole = true;
+
+    function connect() {
+      // Close existing connection if any
+      if (ws) {
+        ws.close();
+        ws = null;
+      }
+      // Clear any existing reconnection timeout
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+        reconnectTimeout = null;
+      }
+      updateStatus(false);
+      const wsUrl = 'ws://' + window.location.hostname + '/ws';
+      ws = new WebSocket(wsUrl);
+
+      ws.onopen = () => {
+        console.log('[Dashboard] Connected');
+        updateStatus(true);
+        lastMessageTime = Date.now();
+        // Clear any pending reconnection
+        if (reconnectTimeout) {
+          clearTimeout(reconnectTimeout);
+          reconnectTimeout = null;
+        }
+        // Start checking for message timeout
+        if (messageTimeoutCheck) clearInterval(messageTimeoutCheck);
+        messageTimeoutCheck = setInterval(() => {
+          if (lastMessageTime && Date.now() - lastMessageTime > 5000) {
+            updateStatus(false);
+            // Try to reconnect if WebSocket is closed, closing, or not receiving messages
+            if (!ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
+              console.log('[Dashboard] WebSocket closed, attempting to reconnect...');
+              if (reconnectTimeout) clearTimeout(reconnectTimeout);
+              reconnectTimeout = setTimeout(connect, 3000);
+            } else if (ws.readyState === WebSocket.OPEN) {
+              // WebSocket appears open but not receiving messages - close and reconnect
+              console.log('[Dashboard] No messages received, closing and reconnecting...');
+              ws.close();
+              if (reconnectTimeout) clearTimeout(reconnectTimeout);
+              reconnectTimeout = setTimeout(connect, 3000);
+            }
+          }
+        }, 1000);
+        ws.send(JSON.stringify({ type: 'init' }));
+      };
+
+      ws.onclose = () => {
+        console.log('[Dashboard] Disconnected');
+        updateStatus(false);
+        lastMessageTime = null;
+        if (messageTimeoutCheck) {
+          clearInterval(messageTimeoutCheck);
+          messageTimeoutCheck = null;
+        }
+        reconnectTimeout = setTimeout(connect, 3000);
+      };
+
+      ws.onerror = (err) => {
+        console.error('[Dashboard] Error:', err);
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          handleMessage(msg);
+        } catch (e) {
+          console.error('[Dashboard] Parse error:', e);
+        }
+      };
+    }
+
+    function updateStatus(connected) {
+      const el = document.getElementById('connectionStatus');
+      el.className = 'status' + (connected ? '' : ' disconnected');
+      el.innerHTML = connected ? `
+        <div class="pulse-dot"></div>
+        <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--success)">
+          <path d="M5 12.55a11 11 0 0 1 14.08 0"></path>
+          <path d="M1.42 9a16 16 0 0 1 21.16 0"></path>
+          <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+          <circle cx="12" cy="20" r="1"></circle>
+        </svg>
+        <span>Connected</span>
+      ` : `
+        <div class="pulse-dot"></div>
+        <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--danger)">
+          <line x1="1" y1="1" x2="23" y2="23"></line>
+          <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path>
+          <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path>
+          <path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path>
+          <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path>
+          <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+          <circle cx="12" cy="20" r="1"></circle>
+        </svg>
+        <span>Disconnected</span>
+      `;
+    }
+
+    function handleMessage(msg) {
+      // Update last message time and status
+      lastMessageTime = Date.now();
+      updateStatus(true);
+      
+      switch (msg.type) {
+        case 'init':
+          // Handle dashboard title from server
+          if (msg.title) {
+            setDashboardTitle(msg.title, msg.subtitle);
+          }
+          
+          // Handle tab configuration from server
+          if (typeof msg.enableOTA !== 'undefined') {
+            enableOTA = msg.enableOTA;
+          }
+          if (typeof msg.enableConsole !== 'undefined') {
+            enableConsole = msg.enableConsole;
+          }
+          updateTabVisibility();
+          
+          if (msg.cards) {
+            cards = {};
+            msg.cards.forEach(card => { cards[card.id] = card; });
+          }
+          
+          // Handle groups
+          if (msg.groups) {
+            groups = msg.groups;
+          } else {
+            groups = [];
+          }
+          
+          renderDashboard();
+          
+          // Update OTA info if provided
+          if (msg.version) {
+            const versionEl = document.getElementById('ota-version');
+            if (versionEl) versionEl.textContent = msg.version;
+          }
+          if (msg.lastUpdate) {
+            const updateEl = document.getElementById('ota-last-update');
+            if (updateEl) updateEl.textContent = msg.lastUpdate;
+          }
+          break;
+        case 'update':
+          if (msg.cardId && cards[msg.cardId]) {
+            Object.assign(cards[msg.cardId].config, msg.data);
+            updateCard(msg.cardId);
+          }
+          break;
+        case 'add':
+          if (msg.card) {
+            cards[msg.card.id] = msg.card;
+            renderDashboard();
+          }
+          break;
+        case 'remove':
+          if (msg.cardId) {
+            delete cards[msg.cardId];
+            renderDashboard();
+          }
+          break;
+        case 'log':
+          // Global log message from server
+          addPageLog(msg.level || 'info', msg.message || '');
+          break;
+        case 'heartbeat':
+          // Just keep-alive
+          break;
+      }
+    }
+    
+    function updateTabVisibility() {
+      // Hide/show console tab
+      const sidebarConsole = document.getElementById('sidebar-nav-console');
+      const mobileConsole = document.getElementById('mobile-nav-console');
+      const tabConsole = document.getElementById('tab-console');
+      
+      if (sidebarConsole) sidebarConsole.style.display = enableConsole ? '' : 'none';
+      if (mobileConsole) mobileConsole.style.display = enableConsole ? '' : 'none';
+      if (!enableConsole && tabConsole) tabConsole.style.display = 'none';
+      
+      // Hide/show OTA tab
+      const sidebarOta = document.getElementById('sidebar-nav-ota');
+      const mobileOta = document.getElementById('mobile-nav-ota');
+      const tabOta = document.getElementById('tab-ota');
+      
+      if (sidebarOta) sidebarOta.style.display = enableOTA ? '' : 'none';
+      if (mobileOta) mobileOta.style.display = enableOTA ? '' : 'none';
+      if (!enableOTA && tabOta) tabOta.style.display = 'none';
+    }
+
+    function sendAction(cardId, action, data = {}) {
+      console.log(`[Dashboard] Sending action: ${action} for card: ${cardId}`, data);
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'action', cardId, action, data }));
+      }
+    }
+
+    function renderDashboard() {
+      const dashboard = document.getElementById('dashboard');
+      let html = '';
+      
+      // Helper to sort cards by weight (ascending)
+      const sortByWeight = (cardList) => {
+        return [...cardList].sort((a, b) => (a.weight || 0) - (b.weight || 0));
+      };
+      
+      // Track which cards are in groups
+      const groupedCardIds = new Set();
+      groups.forEach(g => g.cardIds.forEach(id => groupedCardIds.add(id)));
+      
+      // Render grouped cards first
+      groups.forEach(group => {
+        // Get cards in this group and sort by weight
+        const groupCards = group.cardIds
+          .map(cardId => cards[cardId])
+          .filter(Boolean);
+        const sortedGroupCards = sortByWeight(groupCards);
+        
+        html += `<div class="section-title">${group.title}</div>`;
+        html += '<div class="grid">';
+        sortedGroupCards.forEach(card => {
+          html += renderCard(card);
+        });
+        html += '</div>';
+      });
+      
+      // Render ungrouped cards (or all cards if no groups defined)
+      const ungroupedCards = Object.values(cards).filter(c => !groupedCardIds.has(c.id));
+      const sortedUngroupedCards = sortByWeight(ungroupedCards);
+      
+      if (sortedUngroupedCards.length > 0) {
+        // Only show "Other" section title if groups are defined
+        if (groups.length > 0) {
+          html += '<div class="section-title">Other</div>';
+        }
+        html += '<div class="grid">';
+        sortedUngroupedCards.forEach(card => { html += renderCard(card); });
+        html += '</div>';
+      }
+      
+      dashboard.innerHTML = html;
+      initializeCards();
+    }
+
+    function getCardSizeStyle(config) {
+      const sizeX = config.sizeX || 1;
+      const sizeY = config.sizeY || 1;
+      let style = '';
+      if (sizeX > 1) style += `grid-column: span ${sizeX};`;
+      if (sizeY > 1) style += `grid-row: span ${sizeY};`;
+      return style;
+    }
+
+    function renderCard(card) {
+      const { id, type, config } = card;
+      const sizeStyle = getCardSizeStyle(config);
+
+      switch (type) {
+        case 'stat':
+          return `
+            <div class="card" data-id="${id}" style="${sizeStyle}"><div class="update-indicator"></div>
+              <div class="card-title">${config.title || 'Value'}</div>
+              <div>
+                <span class="stat-value">${config.value || 0}</span>
+                <span class="stat-unit">${config.unit || ''}</span>
+              </div>
+              ${config.trend ? `<div class="stat-trend ${config.trend}">${config.trend === 'up' ? '↑' : '↓'} ${config.trendValue || ''}</div>` : ''}
+            </div>
+          `;
+          
+        case 'status':
+          const iconMap = { wifi: '📶', check: '✓', error: '✕', warning: '⚠', info: 'ℹ', power: '⚡', sync: '🔄', cloud: '☁', lock: '🔒', unlock: '🔓' };
+          return `
+            <div class="card" data-id="${id}" style="${sizeStyle}"><div class="update-indicator"></div>
+              <div class="card-title">${config.title || 'Status'}</div>
+              <div class="status-card">
+                <div class="status-icon ${config.variant || 'primary'}">
+                  ${config.icon ? (iconMap[config.icon] || config.icon) : '●'}
+                </div>
+                <div class="status-content">
+                  <div class="status-label">${config.label || 'Status'}</div>
+                  <div class="status-message">${config.message || ''}</div>
+                </div>
+              </div>
+            </div>
+          `;
+          
+        case 'chart':
+          const chartAxisData = getChartAxisData(config);
+          return `
+            <div class="card" data-id="${id}" style="${sizeStyle}"><div class="update-indicator"></div>
+              <div class="chart-header">
+                <div class="card-title">${config.title || 'Chart'}</div>
+                <div style="display:flex;gap:8px;align-items:center">
+                  <span class="chart-type-badge">${config.chartType || 'line'}</span>
+                  <div class="chart-live"><div class="pulse-dot" style="width:6px;height:6px"></div> Live</div>
+                </div>
+              </div>
+              ${renderChartLegend(config)}
+              <div class="chart-wrapper">
+                <div class="chart-y-axis">
+                  <span>${chartAxisData.maxLabel}</span>
+                  <span>${chartAxisData.midLabel}</span>
+                  <span>${chartAxisData.minLabel}</span>
+                </div>
+                <div class="chart-container">
+                  <svg class="chart-svg" viewBox="0 0 100 70" preserveAspectRatio="none">
+                    <defs>
+                      ${renderChartGradients(id, config)}
+                    </defs>
+                    ${renderChartContent(id, config)}
+                  </svg>
+                </div>
+                <div class="chart-x-axis">
+                  ${chartAxisData.xLabels.map(l => `<span>${l}</span>`).join('')}
+                </div>
+              </div>
+            </div>
+          `;
+          
+        case 'button':
+          return `
+            <div class="card" data-id="${id}" style="${sizeStyle}"><div class="update-indicator"></div>
+              <div class="card-title">${config.title || 'Button'}</div>
+              <button class="btn btn-${config.variant || 'primary'}" onclick="sendAction('${id}', 'click')">
+                ${config.icon ? `<span>${config.icon}</span>` : ''}
+                ${config.label || 'Click'}
+              </button>
+            </div>
+          `;
+          
+        case 'link':
+          return `
+            <div class="card" data-id="${id}" style="${sizeStyle}"><div class="update-indicator"></div>
+              <div class="card-title">${config.title || 'Link'}</div>
+              <a href="${config.url || '#'}" target="${config.target || '_blank'}" class="btn btn-${config.variant || 'primary'}" ${config.url ? '' : 'onclick="event.preventDefault()"'}>
+                ${config.icon ? `<span>${config.icon}</span>` : ''}
+                ${config.label || 'Open Link'}
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+              </a>
+            </div>
+          `;
+          
+        case 'timezone':
+          return `
+            <div class="card" data-id="${id}" style="${sizeStyle}"><div class="update-indicator"></div>
+              <div class="card-title">${config.title || 'Timezone'}</div>
+              <div style="margin-bottom:12px">
+                <span class="stat-value" style="font-size:1.25rem" id="tz-display-${id}">${config.value || 'Not set'}</span>
+              </div>
+              <button class="btn btn-${config.variant || 'info'}" onclick="getTimezone('${id}')">
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                ${config.label || 'Get Browser Timezone'}
+              </button>
+            </div>
+          `;
+          
+        case 'date':
+          return `
+            <div class="card" data-id="${id}" style="${sizeStyle}"><div class="update-indicator"></div>
+              <div class="card-title">${config.title || 'Date'}</div>
+              <input type="${config.includeTime ? 'datetime-local' : 'date'}" class="date-input" id="date-${id}" value="${config.value || ''}" onchange="changeDate('${id}', this.value)" ${config.min ? `min="${config.min}"` : ''} ${config.max ? `max="${config.max}"` : ''}>
+            </div>
+          `;
+          
+        case 'time':
+          return `
+            <div class="card" data-id="${id}" style="${sizeStyle}"><div class="update-indicator"></div>
+              <div class="card-title">${config.title || 'Time'}</div>
+              <input type="time" class="date-input" id="time-${id}" value="${config.value || ''}" ${config.includeSeconds ? 'step="1"' : ''} onchange="changeTime('${id}', this.value)">
+            </div>
+          `;
+          
+        case 'location':
+          const hasLocation = config.latitude !== 0 || config.longitude !== 0;
+          return `
+            <div class="card" data-id="${id}" style="${sizeStyle}"><div class="update-indicator"></div>
+              <div class="card-title">${config.title || 'Location'}</div>
+              <div style="margin-bottom:12px;font-family:'JetBrains Mono',monospace;font-size:0.85rem">
+                <div id="loc-display-${id}" style="color:var(--text-muted)">
+                  ${hasLocation ? `Lat: ${config.latitude.toFixed(6)}<br>Lon: ${config.longitude.toFixed(6)}` : 'Not set'}
+                </div>
+              </div>
+              <div id="loc-error-${id}" style="display:none;color:var(--warning);font-size:0.75rem;margin-bottom:8px;padding:8px;background:var(--warning-glow);border-radius:6px"></div>
+              <div id="loc-manual-${id}" style="display:none;margin-bottom:12px">
+                <div style="margin-bottom:8px">
+                  <input type="number" step="any" placeholder="Latitude" id="loc-lat-${id}" class="input" style="width:100%" value="${config.latitude || ''}">
+                  <input type="number" step="any" placeholder="Longitude" id="loc-lon-${id}" class="input" style="width:100%" value="${config.longitude || ''}">
+                </div>
+                <button class="btn btn-success" onclick="setManualLocation('${id}')" style="width:100%">
+                  <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                  Set Coordinates
+                </button>
+              </div>
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-${config.variant || 'info'}" onclick="getLocation('${id}')">
+                  <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></svg>
+                  ${config.label || 'Get Location'}
+                </button>
+                <button class="btn btn-secondary" onclick="toggleManualLocation('${id}')" title="Enter manually">
+                  <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                </button>
+              </div>
+            </div>
+          `;
+          
+        case 'toggle':
+          return `
+            <div class="card" data-id="${id}" style="${sizeStyle}"><div class="update-indicator"></div>
+              <div class="toggle-container">
+                <div>
+                  <div class="card-title">${config.title || 'Toggle'}</div>
+                  <div style="font-size:1.1rem;font-weight:600;margin-top:6px">${config.label || ''}</div>
+                </div>
+                <div class="toggle ${config.value ? 'on' : ''}" onclick="toggleSwitch('${id}')">
+                  <div class="toggle-knob"></div>
+                </div>
+              </div>
+            </div>
+          `;
+          
+        case 'slider':
+          const pct = ((config.value - (config.min || 0)) / ((config.max || 100) - (config.min || 0))) * 100;
+          return `
+            <div class="card" data-id="${id}" style="${sizeStyle}">
+              <div class="slider-header">
+                <div class="card-title">${config.title || 'Slider'}</div>
+                <div><span class="slider-value">${config.value || 0}</span><span class="stat-unit">${config.unit || ''}</span></div>
+              </div>
+              <div class="slider-track" onmousedown="startSlider(event, '${id}', ${config.min || 0}, ${config.max || 100})" ontouchstart="startSliderTouch(event, '${id}', ${config.min || 0}, ${config.max || 100})">
+                <div class="slider-fill" style="width:${pct}%"></div>
+                <div class="slider-thumb" style="left:calc(${pct}% - 12px)"></div>
+              </div>
+              <div class="slider-labels">
+                <span>${config.min || 0}${config.unit || ''}</span>
+                <span>${config.max || 100}${config.unit || ''}</span>
+              </div>
+            </div>
+          `;
+          
+        case 'input':
+          return `
+            <div class="card" data-id="${id}" style="${sizeStyle}">
+              <div class="card-title">${config.title || 'Input'}</div>
+              <div class="input-group">
+                <input type="${config.inputType || 'text'}" class="input" placeholder="${config.placeholder || ''}" value="${config.value || ''}" id="input-${id}" ${config.inputType === 'number' ? `min="${config.min || ''}" max="${config.max || ''}" step="${config.step || 1}"` : ''}>
+                <button class="input-btn" onclick="submitInput('${id}')">
+                  <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          `;
+          
+        case 'color':
+          return `
+            <div class="card" data-id="${id}" style="${sizeStyle}">
+              <div class="card-title">${config.title || 'Color'}</div>
+              <div class="color-row">
+                <div class="color-preview" style="background:${config.value || '#00D4AA'};box-shadow:0 4px 24px ${config.value || '#00D4AA'}50"></div>
+                <input type="color" class="color-picker-input" value="${config.value || '#00D4AA'}" onchange="changeColor('${id}', this.value)">
+                <div style="font-family:monospace;font-size:0.85rem;color:var(--text-muted)">${config.value || '#00D4AA'}</div>
+              </div>
+              <div class="color-presets">
+                ${(config.presets || ['#00D4AA','#22C55E','#F59E0B','#F97316','#EF4444','#EC4899','#8B5CF6','#3B82F6','#06B6D4','#FFFFFF']).map(c => 
+                  `<div class="color-preset ${config.value === c ? 'active' : ''}" style="background:${c};${config.value === c ? 'box-shadow:0 0 12px '+c : ''}" onclick="changeColor('${id}', '${c}')"></div>`
+                ).join('')}
+              </div>
+            </div>
+          `;
+          
+        case 'dropdown':
+          const selectedOpt = (config.options || []).find(o => o.value === config.value);
+          return `
+            <div class="card" data-id="${id}" style="${sizeStyle}">
+              <div class="card-title">${config.title || 'Select'}</div>
+              <div class="dropdown" id="dropdown-${id}">
+                <div class="dropdown-trigger" onclick="toggleDropdown('${id}')">
+                  <span>${selectedOpt?.label || config.placeholder || 'Select...'}</span>
+                  <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+                <div class="dropdown-menu">
+                  ${(config.options || []).map(o => `
+                    <div class="dropdown-item ${config.value === o.value ? 'active' : ''}" onclick="selectDropdown('${id}', '${o.value}')">
+                      <span>${o.label}</span>
+                      ${config.value === o.value ? '<svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            </div>
+          `;
+          
+        case 'action':
+          return `
+            <div class="card" data-id="${id}" style="${sizeStyle}">
+              <div class="card-title">${config.title || 'Action'}</div>
+              <button class="btn btn-${config.variant || 'warning'}" onclick="showConfirmModal('${id}', '${(config.confirmTitle || 'Confirm').replace(/'/g, "\\'")}', '${(config.confirmMessage || 'Are you sure?').replace(/'/g, "\\'")}')">
+                ${config.icon ? `<span>${config.icon}</span>` : ''}
+                ${config.label || 'Confirm Action'}
+              </button>
+            </div>
+          `;
+          
+        case 'gauge':
+          const gaugePct = ((config.value - (config.min || 0)) / ((config.max || 100) - (config.min || 0))) * 100;
+          const angle = (gaugePct / 100) * 180 - 90;
+          const arcLength = 251.2;
+          const dashOffset = arcLength - (gaugePct / 100) * arcLength;
+          const gaugeColor = config.value >= (config.thresholds?.danger || 90) ? 'var(--danger)' : 
+                            config.value >= (config.thresholds?.warning || 70) ? 'var(--warning)' : 'var(--primary)';
+          return `
+            <div class="card" data-id="${id}" style="${sizeStyle}">
+              <div class="card-title" style="text-align:center">${config.title || 'Gauge'}</div>
+              <div class="gauge-container">
+                <svg class="gauge-svg" viewBox="0 0 200 120">
+                  <path class="gauge-track" d="M 20 100 A 80 80 0 0 1 180 100"></path>
+                  <path class="gauge-fill" d="M 20 100 A 80 80 0 0 1 180 100" stroke="${gaugeColor}" stroke-dasharray="${arcLength}" stroke-dashoffset="${dashOffset}" style="filter:drop-shadow(0 0 8px ${gaugeColor})"></path>
+                  <g style="transform:rotate(${angle}deg);transform-origin:100px 100px;transition:transform 0.5s ease-out">
+                    <line x1="100" y1="100" x2="100" y2="40" stroke="${gaugeColor}" stroke-width="3" stroke-linecap="round"/>
+                    <circle cx="100" cy="100" r="10" fill="${gaugeColor}"/>
+                    <circle cx="100" cy="100" r="5" fill="var(--bg-card)"/>
+                  </g>
+                </svg>
+                <div class="gauge-value-container">
+                  <span class="gauge-value" style="color:${gaugeColor}">${config.value || 0}</span>
+                  <span class="stat-unit">${config.unit || '%'}</span>
+                </div>
+              </div>
+            </div>
+          `;
+          
+        // OTA and Console cards removed - use tabs instead
+        case 'ota':
+        case 'console':
+          return ''; // These card types are only available as tabs
+          
+        default:
+          return `<div class="card" data-id="${id}" style="${sizeStyle}"><div class="card-title">Unknown: ${type}</div></div>`;
+      }
+    }
+
+    function getChartAxisData(config) {
+      const series = config.series || [];
+      const legacyData = config.data || [];
+      
+      let allSeries = [];
+      if (series.length > 0) {
+        allSeries = series;
+      } else if (legacyData.length > 0) {
+        allSeries = [{ name: '', color: config.color || 'primary', data: legacyData }];
+      }
+      
+      // Find global min/max
+      let globalMin = Infinity, globalMax = -Infinity;
+      let maxDataPoints = 0;
+      allSeries.forEach(s => {
+        maxDataPoints = Math.max(maxDataPoints, s.data.length);
+        s.data.forEach(v => {
+          if (v < globalMin) globalMin = v;
+          if (v > globalMax) globalMax = v;
+        });
+      });
+      
+      if (!isFinite(globalMin)) globalMin = 0;
+      if (!isFinite(globalMax)) globalMax = 100;
+      
+      // Format axis values
+      const formatVal = (v) => {
+        if (Math.abs(v) >= 1000) return (v / 1000).toFixed(1) + 'k';
+        if (Math.abs(v) >= 1) return v.toFixed(1);
+        return v.toFixed(2);
+      };
+      
+      // X-axis time labels (N-Ns format)
+      const xLabels = [];
+      const numLabels = Math.min(5, maxDataPoints);
+      if (maxDataPoints > 1) {
+        for (let i = 0; i < numLabels; i++) {
+          const idx = Math.floor(i * (maxDataPoints - 1) / (numLabels - 1));
+          const offset = maxDataPoints - 1 - idx;
+          xLabels.push(offset === 0 ? 'N' : `N-${offset}`);
+        }
+      } else {
+        xLabels.push('N');
+      }
+      
+      return {
+        minLabel: formatVal(globalMin),
+        maxLabel: formatVal(globalMax),
+        midLabel: formatVal((globalMin + globalMax) / 2),
+        xLabels: xLabels
+      };
+    }
+    
+    function renderChartContent(id, config) {
+      const series = config.series || [];
+      const legacyData = config.data || [];
+      const chartType = config.chartType || 'line';
+      const padding = 5;
+      const height = 60;
+      
+      // Determine data sources
+      let allSeries = [];
+      if (series.length > 0) {
+        allSeries = series;
+      } else if (legacyData.length > 0) {
+        allSeries = [{ name: '', color: config.color || 'primary', data: legacyData }];
+      }
+      
+      if (allSeries.length === 0 || allSeries.every(s => s.data.length === 0)) return '';
+      
+      // Find global min/max across all series
+      let globalMin = Infinity, globalMax = -Infinity;
+      allSeries.forEach(s => {
+        s.data.forEach(v => {
+          if (v < globalMin) globalMin = v;
+          if (v > globalMax) globalMax = v;
+        });
+      });
+      const range = globalMax - globalMin || 1;
+      
+      // Grid lines
+      let svg = `<g class="chart-grid">`;
+      for (let i = 0; i <= 4; i++) {
+        const y = padding + (i / 4) * (height - padding * 2);
+        svg += `<line x1="${padding}" y1="${y}" x2="${100-padding}" y2="${y}"/>`;
+      }
+      svg += `</g>`;
+      
+      // Render each series
+      allSeries.forEach((s, seriesIdx) => {
+        const data = s.data;
+        if (data.length === 0) return;
+        
+        const color = `var(--${s.color || 'primary'})`;
+        
+        const points = data.map((v, i) => ({
+          x: padding + (i / (data.length - 1 || 1)) * (100 - padding * 2),
+          y: height - padding - ((v - globalMin) / range) * (height - padding * 2),
+          value: v
+        }));
+        
+        if (chartType === 'bar') {
+          const totalBars = allSeries.reduce((sum, ss) => Math.max(sum, ss.data.length), 0);
+          const groupWidth = (100 - padding * 2) / totalBars;
+          const barWidth = groupWidth * 0.7 / allSeries.length;
+          const gap = groupWidth * 0.15;
+          data.forEach((v, i) => {
+            const barHeight = ((v - globalMin) / range) * (height - padding * 2);
+            const x = padding + i * groupWidth + gap + seriesIdx * barWidth;
+            const y = height - padding - barHeight;
+            svg += `<rect class="chart-bar" x="${x}" y="${y}" width="${barWidth}" height="${barHeight}" rx="2" style="fill:${color}"/>`;
+          });
+        } else if (chartType === 'scatter') {
+          points.forEach(p => {
+            svg += `<circle class="chart-point" cx="${p.x}" cy="${p.y}" r="4" style="fill:${color}"/>`;
+          });
+        } else if (chartType === 'step') {
+          let path = `M ${points[0].x} ${points[0].y}`;
+          for (let i = 1; i < points.length; i++) {
+            path += ` H ${points[i].x} V ${points[i].y}`;
+          }
+          svg += `<path class="chart-path" d="${path}" style="stroke:${color}"/>`;
+          points.forEach(p => {
+            svg += `<circle class="chart-point" cx="${p.x}" cy="${p.y}" r="3" style="fill:${color}"/>`;
+          });
+        } else {
+          // Line or Area
+          let linePath = `M ${points[0].x} ${points[0].y}`;
+          for (let i = 1; i < points.length; i++) {
+            const prev = points[i - 1];
+            const curr = points[i];
+            const cpx = (prev.x + curr.x) / 2;
+            linePath += ` C ${cpx} ${prev.y} ${cpx} ${curr.y} ${curr.x} ${curr.y}`;
+          }
+          
+          if (chartType === 'area') {
+            const areaPath = linePath + ` L ${points[points.length-1].x} ${height-padding} L ${points[0].x} ${height-padding} Z`;
+            svg += `<path class="chart-area" d="${areaPath}" style="fill:url(#chartGradient-${id}-${seriesIdx})"/>`;
+          }
+          
+          svg += `<path class="chart-path" d="${linePath}" style="stroke:${color}"/>`;
+          
+          // Round points
+          points.forEach(p => {
+            svg += `<circle class="chart-point" cx="${p.x}" cy="${p.y}" r="1.5" style="fill:${color}"/>`;
+          });
+        }
+      });
+      
+      return svg;
+    }
+    
+    function renderChartGradients(id, config) {
+      const series = config.series || [];
+      const legacyData = config.data || [];
+      
+      let allSeries = [];
+      if (series.length > 0) {
+        allSeries = series;
+      } else if (legacyData.length > 0) {
+        allSeries = [{ name: '', color: config.color || 'primary', data: legacyData }];
+      }
+      
+      return allSeries.map((s, idx) => `
+        <linearGradient id="chartGradient-${id}-${idx}" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" style="stop-color:var(--${s.color || 'primary'});stop-opacity:0.3"/>
+          <stop offset="100%" style="stop-color:var(--${s.color || 'primary'});stop-opacity:0"/>
+        </linearGradient>
+      `).join('');
+    }
+    
+    function renderChartLegend(config) {
+      const series = config.series || [];
+      if (series.length <= 1) return '';
+      
+      return `<div class="chart-legend">${series.map(s => 
+        `<span class="chart-legend-item"><span class="chart-legend-dot" style="background:var(--${s.color || 'primary'})"></span>${s.name}</span>`
+      ).join('')}</div>`;
+    }
+
+    function updateCard(id) {
+      const card = cards[id];
+      if (!card) return;
+      const el = document.querySelector(`[data-id="${id}"]`);
+      if (!el) {
+        // Not in DOM, render whole dashboard
+        renderDashboard();
+        return;
+      }
+
+      try {
+        switch (card.type) {
+          case 'stat': {
+            const valueEl = el.querySelector('.stat-value');
+            const unitEl = el.querySelector('.stat-unit');
+            if (valueEl) valueEl.textContent = card.config.value ?? 0;
+            if (unitEl) unitEl.textContent = card.config.unit ?? '';
+
+            const trendEl = el.querySelector('.stat-trend');
+            if (card.config.trend) {
+              if (trendEl) {
+                trendEl.className = `stat-trend ${card.config.trend}`;
+                trendEl.textContent = `${card.config.trend === 'up' ? '↑' : '↓'} ${card.config.trendValue || ''}`;
+              } else {
+                const t = document.createElement('div');
+                t.className = `stat-trend ${card.config.trend}`;
+                t.textContent = `${card.config.trend === 'up' ? '↑' : '↓'} ${card.config.trendValue || ''}`;
+                el.appendChild(t);
+              }
+            } else if (trendEl) {
+              trendEl.remove();
+            }
+            break;
+          }
+
+          case 'status': {
+            const lbl = el.querySelector('.status-label');
+            const msg = el.querySelector('.status-message');
+            const icon = el.querySelector('.status-icon');
+            if (lbl) lbl.textContent = card.config.label || 'Status';
+            if (msg) msg.textContent = card.config.message || '';
+            if (icon) {
+              icon.className = 'status-icon ' + (card.config.variant || 'primary');
+              const iconMap = { wifi: '📶', check: '✓', error: '✕', warning: '⚠', info: 'ℹ', power: '⚡', sync: '🔄', cloud: '☁', lock: '🔒', unlock: '🔓' };
+              icon.innerHTML = card.config.icon ? (iconMap[card.config.icon] || card.config.icon) : '●';
+            }
+            break;
+          }
+
+          case 'chart': {
+            const container = el.querySelector('.chart-container');
+            const legendEl = el.querySelector('.chart-legend');
+            const yAxisEl = el.querySelector('.chart-y-axis');
+            const xAxisEl = el.querySelector('.chart-x-axis');
+            
+            if (container) {
+              container.innerHTML = `<svg class="chart-svg" viewBox="0 0 100 70" preserveAspectRatio="none"><defs>${renderChartGradients(id, card.config)}</defs>${renderChartContent(id, card.config)}</svg>`;
+            }
+            
+            // Update axis labels
+            const axisData = getChartAxisData(card.config);
+            if (yAxisEl) {
+              yAxisEl.innerHTML = `<span>${axisData.maxLabel}</span><span>${axisData.midLabel}</span><span>${axisData.minLabel}</span>`;
+            }
+            if (xAxisEl) {
+              xAxisEl.innerHTML = axisData.xLabels.map(l => `<span>${l}</span>`).join('');
+            }
+            
+            // Update legend if multi-series
+            const newLegend = renderChartLegend(card.config);
+            if (newLegend && !legendEl) {
+              container.insertAdjacentHTML('beforebegin', newLegend);
+            } else if (legendEl && !newLegend) {
+              legendEl.remove();
+            }
+            break;
+          }
+
+          case 'console': {
+            const logsEl = el.querySelector('.console-logs');
+            if (logsEl) {
+              logsEl.innerHTML = renderConsoleLogs(card);
+            }
+            break;
+          }
+
+          case 'dropdown': {
+            const triggerText = el.querySelector('.dropdown-trigger span');
+            const menu = el.querySelector('.dropdown-menu');
+            const selectedOpt = (card.config.options || []).find(o => o.value === card.config.value);
+
+            if (triggerText) {
+              triggerText.textContent = selectedOpt?.label || card.config.placeholder || 'Select...';
+            }
+
+            if (menu) {
+              menu.innerHTML = (card.config.options || []).map(opt => {
+                const active = card.config.value === opt.value;
+                return `
+                  <div class="dropdown-item ${active ? 'active' : ''}" onclick="selectDropdown('${id}','${opt.value}')">
+                    <span>${opt.label || opt.value}</span>
+                    ${active ? '<svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
+                  </div>
+                `;
+              }).join('');
+            }
+            break;
+          }
+
+          case 'slider': {
+            const fill = el.querySelector('.slider-fill');
+            const thumb = el.querySelector('.slider-thumb');
+            const valDisp = el.querySelector('.slider-value');
+            const pct = Math.round(((card.config.value - (card.config.min||0))/((card.config.max||100)-(card.config.min||0)))*100);
+            if (fill) fill.style.width = `${pct}%`;
+            if (thumb) thumb.style.left = `calc(${pct}% - 12px)`;
+            if (valDisp) valDisp.textContent = card.config.value || 0;
+            break;
+          }
+
+          default:
+            // Fallback: re-render full card if we don't have an optimized path
+            el.outerHTML = renderCard(card);
+            break;
+        }
+
+        // Visual update indicator (small dot flash)
+        flashIndicator(el);
+      } catch (e) {
+        // On any error, safe fallback to re-render
+        el.outerHTML = renderCard(card);
+      }
+    }
+
+    function initializeCards() {
+      // Close dropdowns on outside click
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('.dropdown')) {
+          document.querySelectorAll('.dropdown.open').forEach(d => {
+            d.classList.remove('open');
+            const c = d.closest('.card');
+            if (c) c.classList.remove('dropdown-open');
+          });
+        }
+      });
+    }
+
+    function flashIndicator(el) {
+      const dot = el.querySelector('.update-indicator');
+      if (!dot) return;
+      dot.classList.remove('flash');
+      // Force reflow so animation restarts reliably
+      void dot.offsetWidth;
+      dot.classList.add('flash');
+    }
+
+    function renderConsoleLogs(card) {
+      const logs = card.config.logs || [];
+      return logs.map(log => `<div class="console-log-entry"><div class="console-timestamp">${log.timestamp}</div><div class="console-level ${log.level}">${log.level}</div><div class="console-message ${log.level}">${escapeHtml(log.message)}</div></div>`).join('');
+    }
+
+    // Interactive handlers
+    function toggleSwitch(id) {
+      const card = cards[id];
+      if (!card) return;
+      card.config.value = !card.config.value;
+      sendAction(id, 'change', { value: card.config.value });
+      updateCard(id);
+    }
+
+    let activeSlider = null;
+    function startSlider(e, id, min, max) {
+      e.preventDefault();
+      activeSlider = { id, min, max };
+      updateSlider(e);
+      document.addEventListener('mousemove', updateSlider);
+      document.addEventListener('mouseup', stopSlider);
+    }
+
+    function startSliderTouch(e, id, min, max) {
+      activeSlider = { id, min, max };
+      updateSliderTouch(e);
+      document.addEventListener('touchmove', updateSliderTouch, { passive: false });
+      document.addEventListener('touchend', stopSlider);
+    }
+
+    function updateSlider(e) {
+      if (!activeSlider) return;
+      const { id, min, max } = activeSlider;
+      const track = document.querySelector(`[data-id="${id}"] .slider-track`);
+      const rect = track.getBoundingClientRect();
+      let pct = (e.clientX - rect.left) / rect.width;
+      pct = Math.max(0, Math.min(1, pct));
+      const step = cards[id].config.step || 1;
+      let value = min + pct * (max - min);
+      value = Math.round(value / step) * step;
+      cards[id].config.value = Math.max(min, Math.min(max, value));
+      updateCard(id);
+    }
+
+    function updateSliderTouch(e) {
+      if (!activeSlider) return;
+      e.preventDefault();
+      const touch = e.touches[0];
+      const { id, min, max } = activeSlider;
+      const track = document.querySelector(`[data-id="${id}"] .slider-track`);
+      const rect = track.getBoundingClientRect();
+      let pct = (touch.clientX - rect.left) / rect.width;
+      pct = Math.max(0, Math.min(1, pct));
+      const step = cards[id].config.step || 1;
+      let value = min + pct * (max - min);
+      value = Math.round(value / step) * step;
+      cards[id].config.value = Math.max(min, Math.min(max, value));
+      updateCard(id);
+    }
+
+    function stopSlider() {
+      if (activeSlider) {
+        sendAction(activeSlider.id, 'change', { value: cards[activeSlider.id].config.value });
+      }
+      activeSlider = null;
+      document.removeEventListener('mousemove', updateSlider);
+      document.removeEventListener('mouseup', stopSlider);
+      document.removeEventListener('touchmove', updateSliderTouch);
+      document.removeEventListener('touchend', stopSlider);
+    }
+
+    function submitInput(id) {
+      const input = document.getElementById(`input-${id}`);
+      if (input) {
+        cards[id].config.value = input.value;
+        sendAction(id, 'submit', { value: input.value });
+      }
+    }
+
+    function changeColor(id, color) {
+      cards[id].config.value = color;
+      sendAction(id, 'change', { color });
+      updateCard(id);
+    }
+
+    function changeDate(id, value) {
+      cards[id].config.value = value;
+      sendAction(id, 'change', { value });
+    }
+
+    function changeTime(id, value) {
+      cards[id].config.value = value;
+      sendAction(id, 'change', { value });
+    }
+
+    function getLocation(id) {
+      const errorDiv = document.getElementById(`loc-error-${id}`);
+      const manualDiv = document.getElementById(`loc-manual-${id}`);
+      
+      if (!navigator.geolocation) {
+        if (errorDiv) {
+          errorDiv.textContent = 'Geolocation not supported. Use manual input below.';
+          errorDiv.style.display = 'block';
+        }
+        if (manualDiv) manualDiv.style.display = 'block';
+        return;
+      }
+      
+      const btn = document.querySelector(`[data-id="${id}"] .btn.btn-info, [data-id="${id}"] .btn.btn-primary`);
+      if (btn) btn.textContent = 'Getting location...';
+      if (errorDiv) errorDiv.style.display = 'none';
+      
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+          cards[id].config.latitude = lat;
+          cards[id].config.longitude = lon;
+          
+          const display = document.getElementById(`loc-display-${id}`);
+          if (display) {
+            display.innerHTML = `Lat: ${lat.toFixed(6)}<br>Lon: ${lon.toFixed(6)}`;
+          }
+          if (btn) btn.innerHTML = `<svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></svg> ${cards[id].config.label || 'Get Location'}`;
+          if (manualDiv) manualDiv.style.display = 'none';
+          
+          sendAction(id, 'location', { latitude: lat, longitude: lon });
+        },
+        (error) => {
+          let errorMsg = 'Unable to get location. ';
+          switch(error.code) {
+            case 1: errorMsg += 'Permission denied. Check browser settings or use manual input.'; break;
+            case 2: errorMsg += 'Position unavailable. Try manual input.'; break;
+            case 3: errorMsg += 'Request timeout. Try again or use manual input.'; break;
+            default: errorMsg += error.message;
+          }
+          if (errorDiv) {
+            errorDiv.textContent = errorMsg;
+            errorDiv.style.display = 'block';
+          }
+          if (manualDiv) manualDiv.style.display = 'block';
+          if (btn) btn.innerHTML = `<svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></svg> ${cards[id].config.label || 'Get Location'}`;
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    }
+    
+    function toggleManualLocation(id) {
+      const manualDiv = document.getElementById(`loc-manual-${id}`);
+      if (manualDiv) {
+        manualDiv.style.display = manualDiv.style.display === 'none' ? 'block' : 'none';
+      }
+    }
+    
+    function setManualLocation(id) {
+      const latInput = document.getElementById(`loc-lat-${id}`);
+      const lonInput = document.getElementById(`loc-lon-${id}`);
+      const lat = parseFloat(latInput?.value);
+      const lon = parseFloat(lonInput?.value);
+      
+      if (isNaN(lat) || isNaN(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+        alert('Please enter valid coordinates (Lat: -90 to 90, Lon: -180 to 180)');
+        return;
+      }
+      
+      cards[id].config.latitude = lat;
+      cards[id].config.longitude = lon;
+      
+      const display = document.getElementById(`loc-display-${id}`);
+      if (display) {
+        display.innerHTML = `Lat: ${lat.toFixed(6)}<br>Lon: ${lon.toFixed(6)}`;
+      }
+      
+      const errorDiv = document.getElementById(`loc-error-${id}`);
+      if (errorDiv) errorDiv.style.display = 'none';
+      
+      sendAction(id, 'location', { latitude: lat, longitude: lon });
+    }
+
+    function clearConsole(id) {
+      cards[id].config.logs = [];
+      sendAction(id, 'clear');
+      updateCard(id);
+    }
+
+    function sendConsoleCommand(id) {
+      const input = document.getElementById(`console-input-${id}`);
+      if (!input || !input.value.trim()) return;
+      
+      const command = input.value.trim();
+      input.value = '';
+      
+      // Add command to local logs immediately
+      const now = new Date();
+      const timestamp = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}.${String(now.getMilliseconds()).padStart(3,'0')}`;
+      
+      if (!cards[id].config.logs) cards[id].config.logs = [];
+      cards[id].config.logs.push({
+        timestamp: timestamp,
+        level: 'info',
+        message: '> ' + command
+      });
+      
+      // Send command to ESP32
+      sendAction(id, 'command', { command: command });
+      updateCard(id);
+      
+      // Auto-scroll to bottom
+      const logsEl = document.getElementById(`console-logs-${id}`);
+      if (logsEl) logsEl.scrollTop = logsEl.scrollHeight;
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function getTimezone(id) {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const offset = new Date().getTimezoneOffset();
+      const offsetHours = Math.abs(Math.floor(offset / 60));
+      const offsetMins = Math.abs(offset % 60);
+      const offsetStr = `UTC${offset <= 0 ? '+' : '-'}${String(offsetHours).padStart(2,'0')}:${String(offsetMins).padStart(2,'0')}`;
+      
+      cards[id].config.value = `${tz} (${offsetStr})`;
+      sendAction(id, 'timezone', { timezone: tz, offset: offset, offsetString: offsetStr });
+      updateCard(id);
+    }
+
+    function toggleDropdown(id) {
+      const el = document.getElementById(`dropdown-${id}`);
+      if (!el) return;
+
+      const wasOpen = el.classList.contains('open');
+
+      // Close any other open dropdowns first
+      document.querySelectorAll('.dropdown.open').forEach(d => {
+        d.classList.remove('open');
+        const c = d.closest('.card');
+        if (c) c.classList.remove('dropdown-open');
+      });
+
+      if (!wasOpen) {
+        el.classList.add('open');
+        const c = el.closest('.card');
+        if (c) c.classList.add('dropdown-open');
+      }
+    }
+
+    function selectDropdown(id, value) {
+      cards[id].config.value = value;
+      sendAction(id, 'change', { value });
+      updateCard(id);
+
+      // Close dropdown and restore card clipping
+      const el = document.getElementById(`dropdown-${id}`);
+      if (el) {
+        el.classList.remove('open');
+        const c = el.closest('.card');
+        if (c) c.classList.remove('dropdown-open');
+      }
+    }
+
+    // Confirm Modal
+    let pendingAction = null;
+    function showConfirmModal(id, title, message) {
+      pendingAction = id;
+      document.getElementById('modalTitle').textContent = title;
+      document.getElementById('modalBody').textContent = message;
+      document.getElementById('confirmModal').classList.add('open');
+    }
+
+    function closeModal() {
+      document.getElementById('confirmModal').classList.remove('open');
+      pendingAction = null;
+    }
+
+    document.getElementById('modalConfirm').onclick = () => {
+      if (pendingAction) sendAction(pendingAction, 'confirm');
+      closeModal();
+    };
+
+    // Close modal on backdrop click
+    document.getElementById('confirmModal').onclick = (e) => {
+      if (e.target.id === 'confirmModal') closeModal();
+    };
+
+    // OTA Upload
+    function handleDragOver(e) {
+      e.preventDefault();
+      e.currentTarget.classList.add('dragover');
+    }
+
+    function handleDragLeave(e) {
+      e.currentTarget.classList.remove('dragover');
+    }
+
+    function handleDrop(e, id) {
+      e.preventDefault();
+      e.currentTarget.classList.remove('dragover');
+      const file = e.dataTransfer.files[0];
+      if (file) uploadFirmware(id, file);
+    }
+
+    function handleFileSelect(e, id) {
+      const file = e.target.files[0];
+      if (file) uploadFirmware(id, file);
+    }
+
+    function uploadFirmware(id, file) {
+      const zone = document.getElementById(`upload-${id}`);
+      const progress = document.getElementById(`progress-${id}`);
+      
+      zone.style.display = 'none';
+      progress.style.display = 'block';
+      
+      // Start OTA
+      sendAction(id, 'ota_start', { name: file.name, size: file.size });
+      
+      const reader = new FileReader();
+      const chunkSize = 1024;
+      let offset = 0;
+      
+      reader.onload = () => {
+        const data = new Uint8Array(reader.result);
+        
+        function sendChunk() {
+          if (offset >= data.length) {
+            sendAction(id, 'ota_end', {});
+            document.getElementById(`progress-status-${id}`).textContent = 'Upload complete! Restarting...';
+            return;
+          }
+          
+          const chunk = data.slice(offset, offset + chunkSize);
+          const b64 = btoa(String.fromCharCode.apply(null, chunk));
+          sendAction(id, 'ota_chunk', { data: b64 });
+          offset += chunkSize;
+          const pct = Math.min(100, Math.round((offset / data.length) * 100));
+          document.getElementById(`progress-fill-${id}`).style.width = pct + '%';
+          document.getElementById(`progress-pct-${id}`).textContent = pct + '%';
+          
+          setTimeout(sendChunk, 20);
+        }
+        
+        sendChunk();
+      };
+      
+      reader.readAsArrayBuffer(file);
+    }
+
+    // Tab Navigation
+    let currentTab = 'dashboard';
+    let pageConsoleLogs = [];
+    let activeLogFilter = 'all';
+    
+    function switchTab(tabName) {
+      currentTab = tabName;
+      
+      // Update nav items
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+        if (item.dataset.tab === tabName || item.textContent.trim().toLowerCase().includes(tabName)) {
+          item.classList.add('active');
+        }
+      });
+      
+      // Update tab panels
+      document.querySelectorAll('.tab-panel').forEach(panel => {
+        panel.classList.remove('active');
+      });
+      document.getElementById(`tab-${tabName}`).classList.add('active');
+      
+      // Update console timestamp
+      if (tabName === 'console') {
+        updateConsoleTimestamp();
+      }
+    }
+    
+    function updateConsoleTimestamp() {
+      const now = new Date();
+      const ts = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+      const el = document.getElementById('console-timestamp');
+      if (el) el.textContent = ts;
+    }
+    
+    // Page Console Functions
+    function addPageLog(level, message) {
+      const now = new Date();
+      const timestamp = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}.${String(now.getMilliseconds()).padStart(3,'0')}`;
+      
+      pageConsoleLogs.push({ timestamp, level, message });
+      
+      // Keep only last 500 logs
+      if (pageConsoleLogs.length > 500) {
+        pageConsoleLogs = pageConsoleLogs.slice(-500);
+      }
+      
+      renderPageConsole();
+    }
+    
+    function renderPageConsole() {
+      const logsEl = document.getElementById('page-console-logs');
+      const countEl = document.getElementById('console-count');
+      
+      if (!logsEl) return;
+      
+      const filteredLogs = activeLogFilter === 'all' 
+        ? pageConsoleLogs 
+        : pageConsoleLogs.filter(log => log.level === activeLogFilter);
+      
+      if (filteredLogs.length === 0) {
+        logsEl.innerHTML = '<div class="console-empty">No log entries yet. Logs from your ESP32 will appear here.</div>';
+      } else {
+        logsEl.innerHTML = filteredLogs.map(log => `
+          <div class="console-log-entry">
+            <span class="console-timestamp">${log.timestamp}</span>
+            <span class="console-level ${log.level}">${log.level}</span>
+            <span class="console-message ${log.level}">${escapeHtml(log.message)}</span>
+          </div>
+        `).join('');
+        
+        // Auto-scroll to bottom
+        logsEl.scrollTop = logsEl.scrollHeight;
+      }
+      
+      if (countEl) {
+        countEl.textContent = `${pageConsoleLogs.length} entries`;
+      }
+      
+      updateConsoleTimestamp();
+    }
+    
+    function filterLogs(level) {
+      activeLogFilter = level;
+      
+      // Update filter buttons
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.level === level) {
+          btn.classList.add('active');
+        }
+      });
+      
+      renderPageConsole();
+    }
+    
+    function clearPageConsole() {
+      pageConsoleLogs = [];
+      renderPageConsole();
+      
+      // Also send clear action to any console cards
+      Object.keys(cards).forEach(id => {
+        if (cards[id].type === 'console') {
+          clearConsole(id);
+        }
+      });
+    }
+    
+    function sendPageCommand() {
+      const input = document.getElementById('page-console-input');
+      if (!input || !input.value.trim()) return;
+      
+      const command = input.value.trim();
+      input.value = '';
+      
+      // Add command to page logs
+      addPageLog('info', '> ' + command);
+      
+      // Send command to server - server will route to the console handler
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'command', command: command }));
+      }
+    }
+    
+    function exportLogs() {
+      const content = pageConsoleLogs.map(log => 
+        `[${log.timestamp}] [${log.level.toUpperCase()}] ${log.message}`
+      ).join('\n');
+      
+      const blob = new Blob([content], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `esp32-console-${new Date().toISOString().slice(0,10)}.log`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+    
+    // Page OTA Functions
+    function handlePageOtaDrop(e) {
+      e.preventDefault();
+      e.currentTarget.classList.remove('dragover');
+      const file = e.dataTransfer.files[0];
+      if (file) uploadPageFirmware(file);
+    }
+    
+    function handlePageOtaSelect(e) {
+      const file = e.target.files[0];
+      if (file) uploadPageFirmware(file);
+    }
+    
+    function uploadPageFirmware(file) {
+      const zone = document.getElementById('page-upload-zone');
+      const progress = document.getElementById('page-ota-progress');
+      
+      zone.style.display = 'none';
+      progress.style.display = 'block';
+      
+      // Send OTA start
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'ota_start', name: file.name, size: file.size }));
+      }
+      
+      const reader = new FileReader();
+      const chunkSize = 2048;
+      let offset = 0;
+      
+      reader.onload = () => {
+        const data = new Uint8Array(reader.result);
+        
+        function sendChunk() {
+          if (offset >= data.length) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+              ws.send(JSON.stringify({ type: 'ota_end' }));
+            }
+            document.getElementById('page-progress-status').textContent = 'Upload complete! Restarting...';
+            addPageLog('info', 'OTA upload complete. Device restarting...');
+            
+            // Reset OTA upload form after 5 seconds
+            setTimeout(() => {
+              const zone = document.getElementById('page-upload-zone');
+              const progress = document.getElementById('page-ota-progress');
+              const fileInput = document.getElementById('page-ota-file');
+              if (zone) zone.style.display = 'block';
+              if (progress) progress.style.display = 'none';
+              if (fileInput) fileInput.value = '';
+              document.getElementById('page-progress-fill').style.width = '0%';
+              document.getElementById('page-progress-pct').textContent = '0%';
+              document.getElementById('page-progress-status').textContent = 'Uploading...';
+            }, 5000);
+            return;
+          }
+          
+          const chunk = data.slice(offset, offset + chunkSize);
+          const b64 = btoa(String.fromCharCode.apply(null, chunk));
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'ota_chunk', data: b64 }));
+          }
+          
+          offset += chunkSize;
+          const pct = Math.min(100, Math.round((offset / data.length) * 100));
+          document.getElementById('page-progress-fill').style.width = pct + '%';
+          document.getElementById('page-progress-pct').textContent = pct + '%';
+          
+          setTimeout(sendChunk, 20);
+        }
+        
+        addPageLog('info', `Starting OTA upload: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`);
+        sendChunk();
+      };
+      
+      reader.readAsArrayBuffer(file);
+    }
+    
+    // Hook into WebSocket messages for page console
+    const originalHandleMessage = handleMessage;
+    handleMessage = function(msg) {
+      originalHandleMessage(msg);
+      
+      // Handle console card updates - sync with page console
+      if (msg.type === 'update' && msg.cardId && cards[msg.cardId]?.type === 'console') {
+        const newLogs = msg.data.logs || [];
+        newLogs.forEach(log => {
+          // Avoid duplicates by checking timestamp and message
+          const exists = pageConsoleLogs.some(l => l.timestamp === log.timestamp && l.message === log.message);
+          if (!exists) {
+            pageConsoleLogs.push(log);
+          }
+        });
+        renderPageConsole();
+      }
+    };
+
+    // Theme Management
+    let currentTheme = 'dark';
+    
+    function initTheme() {
+      // Check localStorage first
+      const savedTheme = localStorage.getItem('esp-dashboard-theme');
+      if (savedTheme) {
+        currentTheme = savedTheme;
+      }
+      applyTheme(currentTheme);
+    }
+    
+    function applyTheme(theme) {
+      currentTheme = theme;
+      document.documentElement.setAttribute('data-theme', theme);
+      
+      // Update dropdown UI
+      const sunIcon = document.getElementById('theme-icon-sun');
+      const moonIcon = document.getElementById('theme-icon-moon');
+      const label = document.getElementById('theme-label');
+      
+      if (theme === 'light') {
+        sunIcon.style.display = 'block';
+        moonIcon.style.display = 'none';
+        label.textContent = 'Light';
+      } else {
+        sunIcon.style.display = 'none';
+        moonIcon.style.display = 'block';
+        label.textContent = 'Dark';
+      }
+      
+      // Update option checkmarks
+      document.querySelectorAll('.theme-option').forEach(opt => {
+        const check = opt.querySelector('.theme-check');
+        if (opt.dataset.theme === theme) {
+          opt.classList.add('active');
+          if (check) check.style.display = 'block';
+        } else {
+          opt.classList.remove('active');
+          if (check) check.style.display = 'none';
+        }
+      });
+    }
+    
+    function setTheme(theme) {
+      applyTheme(theme);
+      localStorage.setItem('esp-dashboard-theme', theme);
+      closeThemeDropdown();
+    }
+    
+    function toggleThemeDropdown() {
+      const dropdown = document.getElementById('themeDropdown');
+      dropdown.classList.toggle('open');
+    }
+    
+    function closeThemeDropdown() {
+      const dropdown = document.getElementById('themeDropdown');
+      dropdown.classList.remove('open');
+    }
+    
+    // Close theme dropdown on outside click
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.theme-dropdown')) {
+        closeThemeDropdown();
+      }
+    });
+    
+    // Dashboard title
+    let dashboardTitle = 'ESP32 Dashboard';
+    let dashboardSubtitle = 'Real-time Device Monitor';
+    
+    function setDashboardTitle(title, subtitle) {
+      if (title) {
+        dashboardTitle = title;
+        const titleEl = document.querySelector('.logo h1');
+        if (titleEl) titleEl.textContent = title;
+      }
+      if (subtitle) {
+        dashboardSubtitle = subtitle;
+        const subtitleEl = document.querySelector('.logo p');
+        if (subtitleEl) subtitleEl.textContent = subtitle;
+      }
+    }
+
+    // Initialize
+    initTheme();
+    connect();
+    setInterval(updateConsoleTimestamp, 1000);
+  </script>
+</body>
+</html>

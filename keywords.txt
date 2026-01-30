@@ -1,0 +1,190 @@
+#######################################
+# ESP-DashboardPlus Arduino Library
+# Syntax Coloring Map
+#######################################
+
+#######################################
+# Classes (KEYWORD1)
+#######################################
+
+ESPDashboardPlus	KEYWORD1
+ESPDashboard	KEYWORD1
+DashboardCard	KEYWORD1
+StatCard	KEYWORD1
+ChartCard	KEYWORD1
+GaugeCard	KEYWORD1
+ToggleCard	KEYWORD1
+SliderCard	KEYWORD1
+ButtonCardImpl	KEYWORD1
+ActionButton	KEYWORD1
+InputCard	KEYWORD1
+ColorPickerCard	KEYWORD1
+DropdownCardImpl	KEYWORD1
+LinkCard	KEYWORD1
+TimezoneCard	KEYWORD1
+DateCard	KEYWORD1
+TimeCard	KEYWORD1
+LocationCard	KEYWORD1
+StatusCard	KEYWORD1
+OTACard	KEYWORD1
+ConsoleCard	KEYWORD1
+CardGroup	KEYWORD1
+ChartSeries	KEYWORD1
+DropdownOption	KEYWORD1
+LogEntry	KEYWORD1
+
+#######################################
+# Methods (KEYWORD2)
+#######################################
+
+begin	KEYWORD2
+loop	KEYWORD2
+setTitle	KEYWORD2
+setSubtitle	KEYWORD2
+setVersionInfo	KEYWORD2
+onCommand	KEYWORD2
+
+# Add card methods
+addStatCard	KEYWORD2
+addChartCard	KEYWORD2
+addGaugeCard	KEYWORD2
+addToggleCard	KEYWORD2
+addSliderCard	KEYWORD2
+addButtonCard	KEYWORD2
+addActionButton	KEYWORD2
+addInputCard	KEYWORD2
+addColorPickerCard	KEYWORD2
+addDropdownCard	KEYWORD2
+addLinkCard	KEYWORD2
+addTimezoneCard	KEYWORD2
+addDateCard	KEYWORD2
+addTimeCard	KEYWORD2
+addLocationCard	KEYWORD2
+addStatusCard	KEYWORD2
+
+# Update card methods
+updateStatCard	KEYWORD2
+updateChartCard	KEYWORD2
+updateGaugeCard	KEYWORD2
+updateToggleCard	KEYWORD2
+updateSliderCard	KEYWORD2
+updateColorCard	KEYWORD2
+updateDropdownCard	KEYWORD2
+updateStatusCard	KEYWORD2
+updateDateCard	KEYWORD2
+updateTimeCard	KEYWORD2
+updateLocationCard	KEYWORD2
+updateLinkCard	KEYWORD2
+
+# Group methods
+addGroup	KEYWORD2
+addCardToGroup	KEYWORD2
+removeCardFromGroup	KEYWORD2
+removeGroup	KEYWORD2
+
+# Card methods
+getCard	KEYWORD2
+removeCard	KEYWORD2
+setValue	KEYWORD2
+setVariant	KEYWORD2
+setWeight	KEYWORD2
+setSize	KEYWORD2
+setSizeX	KEYWORD2
+setSizeY	KEYWORD2
+setIcon	KEYWORD2
+setTrend	KEYWORD2
+setStatus	KEYWORD2
+setLabel	KEYWORD2
+setMessage	KEYWORD2
+setThresholds	KEYWORD2
+setPresets	KEYWORD2
+setCallback	KEYWORD2
+setRange	KEYWORD2
+setLocation	KEYWORD2
+setUrl	KEYWORD2
+setTarget	KEYWORD2
+setNumberInput	KEYWORD2
+addOption	KEYWORD2
+addSeries	KEYWORD2
+addDataPoint	KEYWORD2
+clearData	KEYWORD2
+clearSeries	KEYWORD2
+clearAllSeries	KEYWORD2
+setChartType	KEYWORD2
+
+# Console/logging methods
+logDebug	KEYWORD2
+logInfo	KEYWORD2
+logWarning	KEYWORD2
+logError	KEYWORD2
+log	KEYWORD2
+addLog	KEYWORD2
+clear	KEYWORD2
+
+# Callbacks
+onChange	KEYWORD2
+onSubmit	KEYWORD2
+onClear	KEYWORD2
+onProgress	KEYWORD2
+onComplete	KEYWORD2
+
+#######################################
+# Enums (LITERAL1)
+#######################################
+
+# CardType
+STAT	LITERAL1
+CHART	LITERAL1
+BUTTON	LITERAL1
+ACTION	LITERAL1
+DATA_INPUT	LITERAL1
+COLOR	LITERAL1
+DROPDOWN	LITERAL1
+OTA	LITERAL1
+GAUGE	LITERAL1
+TOGGLE	LITERAL1
+SLIDER	LITERAL1
+LINK	LITERAL1
+TIMEZONE	LITERAL1
+DATE	LITERAL1
+TIME	LITERAL1
+LOCATION	LITERAL1
+STATUS	LITERAL1
+CONSOLE	LITERAL1
+
+# CardVariant
+PRIMARY	LITERAL1
+SUCCESS	LITERAL1
+WARNING	LITERAL1
+DANGER	LITERAL1
+INFO	LITERAL1
+SECONDARY	LITERAL1
+
+# ChartType
+LINE	LITERAL1
+AREA	LITERAL1
+BAR	LITERAL1
+SCATTER	LITERAL1
+STEP	LITERAL1
+
+# LogLevel
+DEBUG	LITERAL1
+
+# StatusIcon
+CHECK	LITERAL1
+ERROR	LITERAL1
+WIFI	LITERAL1
+POWER	LITERAL1
+SYNC	LITERAL1
+CLOUD	LITERAL1
+LOCK	LITERAL1
+UNLOCK	LITERAL1
+
+#######################################
+# Constants (LITERAL2)
+#######################################
+
+DASHBOARD_HTML_DATA	LITERAL2
+DASHBOARD_HTML_SIZE	LITERAL2
+DASHBOARD_HTML_ORIGINAL_SIZE	LITERAL2
+DASHBOARD_HTML_HASH	LITERAL2
