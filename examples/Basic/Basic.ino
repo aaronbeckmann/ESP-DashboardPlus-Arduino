@@ -17,6 +17,7 @@
 
 #include <WiFi.h>
 #include <ESPAsyncWebServer.h>
+#include <ArduinoJson.hpp>
 #include "ESPDashboardPlus.h"
 #include "dashboard_html.h"  // Pre-compressed HTML
 
